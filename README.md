@@ -5,10 +5,6 @@ Pixy is a Telegram bot that allows you to increase the quality and size of your 
 
 <img src="assets/pixy-logo.png" alt="Logo" width="250px" height="250px">
 
-## 🎨Diagram and workflow
-
-<img src="assets/Diagram.jpeg" alt="Diagrama">
-
 ## ⚡Usage
 
 You can use the bot from here [Pixy](https://t.me/uppy28bot).
