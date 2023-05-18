@@ -1,0 +1,17 @@
+version: '3'
+services:
+  pixy_server:
+    build:
+      context: .
+      dockerfile: Dockerfile_server
+    ports:
+      - 5556:5556
+  pixy_client:
+    build:
+      context: .
+      dockerfile: Dockerfile_client
+    depends_on:
+      - pixy_server
+    environment:
+      - PIXY_SERVER_HOST=pixy_server
+      - PIXY_SERVER_PORT=5556

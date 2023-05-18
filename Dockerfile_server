@@ -1,0 +1,9 @@
+FROM ubuntu:latest
+
+RUN apt update && apt upgrade -y && apt install python3 -y && apt install python3-opencv -y && apt install ffmpeg -y && apt install python3-pip -y && apt install git -y && apt autoremove -y
+
+COPY . .
+
+RUN python3 setup.py
+
+CMD ["python3", "pixy_server.py", "-ip", "0.0.0.0", "-p", "5556"]

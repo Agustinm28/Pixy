@@ -1,0 +1,5 @@
+data/BOT_CREDENTIALS.txt
+data/REPLICATE_KEY.txt
+env
+./env.sh
+__pycache__
