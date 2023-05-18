@@ -225,5 +225,4 @@ Sends a file to the specified chat ID.
 
 - [Agustín Montaña](Agustinm28)
 
-- **Legajo**: 60160
 
