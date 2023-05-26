@@ -3,3 +3,6 @@ data/REPLICATE_KEY.txt
 env
 ./env.sh
 __pycache__
+run_docker_client.sh
+run_docker_server.sh
+docker-compose.yml

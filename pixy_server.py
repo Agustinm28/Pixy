@@ -93,49 +93,48 @@ def process_queue():
     """
     try:
         while True:
-            while not queue.empty():
-                filename, scale_method = queue.get_nowait()
-                mimetypes.add_type("image/webp", ".webp", strict=True)
-                filetype, encoding = mimetypes.guess_type(filename)
-                chat_id = int((filename.split("_"))[0])
-                print(f'[{Fore.GREEN}PROCESSING{Fore.RESET}] Processing file {filename}...')
-                try:
-                    if filetype.startswith('video/'):
-                        # A child process is spawned to process the video
+            filename, scale_method = queue.get()
+            mimetypes.add_type("image/webp", ".webp", strict=True)
+            filetype, encoding = mimetypes.guess_type(filename)
+            chat_id = int((filename.split("_"))[0])
+            print(f'[{Fore.GREEN}PROCESSING{Fore.RESET}] Processing file {filename}...')
+            try:
+                if filetype.startswith('video/'):
+                    # A child process is spawned to process the video
+                    p_image = multiprocessing.Process(
+                        target=scale_video, args=(filename, 2))
+                    print(f'[{Fore.BLUE}PROCESSING{Fore.RESET}] Generating son process for {filename}')
+                    p_image.start()
+                    p_image.join()
+                else:
+                    # A child process is spawned to process the image
+                    if scale_method == 0:
+                        # Image Processing with Pixel Interpolation
                         p_image = multiprocessing.Process(
-                            target=scale_video, args=(filename, 2))
+                            target=scale_image, args=(filename, 2))
                         print(f'[{Fore.BLUE}PROCESSING{Fore.RESET}] Generating son process for {filename}')
                         p_image.start()
                         p_image.join()
-                    else:
-                        # A child process is spawned to process the image
-                        if scale_method == 0:
-                            # Image Processing with Pixel Interpolation
-                            p_image = multiprocessing.Process(
-                                target=scale_image, args=(filename, 2))
-                            print(f'[{Fore.BLUE}PROCESSING{Fore.RESET}] Generating son process for {filename}')
-                            p_image.start()
-                            p_image.join()
-                        elif scale_method == 1:
-                            # Image Processing with AI
-                            p_image = multiprocessing.Process(
-                                target=scale_image_ia, args=(filename,))
-                            print(f'[{Fore.BLUE}PROCESSING{Fore.RESET}] Generating son process for {filename}')
-                            p_image.start()
-                            p_image.join()
-                    print(f'[{Fore.GREEN}PROCESSING{Fore.RESET}] File {filename} processed')
-                    file_path = f'./upscaled_files/upscaled_{filename}'
-                    print(f'[{Fore.GREEN}SENDING{Fore.RESET}] Sending file {filename} to Telegram user')
-                    os.remove(f'./rec_files/{filename}')
-                    try:
-                        send_file(file_path, filetype, chat_id)
-                        os.remove(file_path)
-                    except FileNotFoundError or UnboundLocalError:
-                        print(f"[{Fore.RED}ERROR{Fore.RESET}] File not found")
-                        send_message(chat_id, "There was an error processing the file.")
-                except AttributeError:
-                    print(f'[{Fore.RED}ERROR{Fore.RESET}] File type is incorrect')
-                    send_message(chat_id, "File type is incorrect")
+                    elif scale_method == 1:
+                        # Image Processing with AI
+                        p_image = multiprocessing.Process(
+                            target=scale_image_ia, args=(filename,))
+                        print(f'[{Fore.BLUE}PROCESSING{Fore.RESET}] Generating son process for {filename}')
+                        p_image.start()
+                        p_image.join()
+                print(f'[{Fore.GREEN}PROCESSING{Fore.RESET}] File {filename} processed')
+                file_path = f'./upscaled_files/upscaled_{filename}'
+                print(f'[{Fore.GREEN}SENDING{Fore.RESET}] Sending file {filename} to Telegram user')
+                os.remove(f'./rec_files/{filename}')
+                try:
+                    send_file(file_path, filetype, chat_id)
+                    os.remove(file_path)
+                except FileNotFoundError or UnboundLocalError:
+                    print(f"[{Fore.RED}ERROR{Fore.RESET}] File not found")
+                    send_message(chat_id, "There was an error processing the file.")
+            except AttributeError:
+                print(f'[{Fore.RED}ERROR{Fore.RESET}] File type is incorrect')
+                send_message(chat_id, "File type is incorrect")
                 
     except KeyboardInterrupt:
         print(f'[{Fore.BLUE}TERMINATED{Fore.RESET}] Queue process terminated')

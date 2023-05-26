@@ -15,7 +15,9 @@ import time
 
 global chat_id
 
-with open('./data/BOT_CREDENTIALS.txt', 'r') as f:
+scale_method = None
+
+with open('./data/TEST_BOT_CREDENTIALS.txt', 'r') as f:
     token = str(f.read())
 chat_id = None
 
@@ -66,20 +68,21 @@ async def receive_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=update.effective_chat.id, text="The maximum size for the video is 20MB")
         return
 
-    # Saves the video locally
-    await context.bot.send_message(chat_id=chat_id, text="Uploading video")
-    video_file = await context.bot.get_file(video.file_id)
-    os.makedirs("./videos", exist_ok=True)
-    video_path = "./videos/" + f"{chat_id}_{video.file_unique_id}.{video.mime_type.split('/')[1]}"
-    try:
-        await video_file.download_to_drive(video_path)
-    except Exception as e:
-        logging.error(e)
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Error processing video")
+    await context.bot.send_message(chat_id=chat_id, text="The video upscaler is temporarily disabled due to hardware limitations.")
+    # # Saves the video locally
+    # await context.bot.send_message(chat_id=chat_id, text="Uploading video")
+    # video_file = await context.bot.get_file(video.file_id)
+    # os.makedirs("./videos", exist_ok=True)
+    # video_path = "./videos/" + f"{chat_id}_{video.file_unique_id}.{video.mime_type.split('/')[1]}"
+    # try:
+    #     await video_file.download_to_drive(video_path)
+    # except Exception as e:
+    #     logging.error(e)
+    #     await context.bot.send_message(chat_id=update.effective_chat.id, text="Error processing video")
 
-    # Send the video to the server to be processed
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="Video uploaded correctly")
-    await send_file(file=video_path, scale_method=None)
+    # # Send the video to the server to be processed
+    # await context.bot.send_message(chat_id=update.effective_chat.id, text="Video uploaded correctly")
+    # await send_file(file=video_path, scale_method=None)
 
 async def receive_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -152,8 +155,35 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         scale_type = "AI"
     await query.edit_message_text(text=f"Upscale method: {scale_type}")
 
-    # Send the image to the server to be processed
-    await send_file(file=file_path, scale_method=scale_method)
+    # Define another inline keyboard for asking another thing
+    keyboard2 = [
+        [InlineKeyboardButton("2x", callback_data=f"2x_{file_path}")],
+        [InlineKeyboardButton("3x", callback_data=f"3x_{file_path}")],
+        [InlineKeyboardButton("4x", callback_data=f"4x_{file_path}")],
+    ]
+
+    reply_markup2 = InlineKeyboardMarkup(keyboard2)
+    # Check if the first keyboard has been answered
+    if scale_method is not None:
+        # Send the second keyboard and wait for a response
+        await update.message.reply_text("Select a upscale factor:", reply_markup=reply_markup2)
+
+        # Get the response from the second keyboard
+        query2 = update.callback_query
+        await query2.answer()
+        factor = query2.data
+
+        factor_data = factor.split('_', 1)
+        factor_value = int(factor_data[0])
+
+        await query2.edit_message_text(text=f"Upscale factor: {factor_value}")
+
+        # Check if both keyboards have been answered
+        if factor is not None:
+            # Send the image to the server to be processed
+            print(f'[{Fore.YELLOW}TEST{Fore.RESET}] Scale method: {scale_method}')
+            print(f'[{Fore.YELLOW}TEST{Fore.RESET}] Scale factor: {factor_value}')
+            await send_file(file=file_path, scale_method=scale_method)
 
 
 async def receive_file(update: Update, context: ContextTypes.DEFAULT_TYPE):  
@@ -176,20 +206,22 @@ async def receive_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if file.file_size > 20 * 1024 * 1024:
             await context.bot.send_message(chat_id=update.effective_chat.id, text="The maximum size for the video is 20MB")
             return
-        # Saves the video locally
-        await context.bot.send_message(chat_id=chat_id, text="Uploading video")
-        document_file = await context.bot.get_file(file.file_id)
-        os.makedirs("./videos", exist_ok=True)
-        file_path = "./videos/" + f"{chat_id}_{file.file_unique_id}.{file.mime_type.split('/')[1]}"
-        try:
-            await document_file.download_to_drive(file_path)
-        except Exception as e:
-            logging.error(e)
-            await context.bot.send_message(chat_id=update.effective_chat.id, text="Error processing video")
+        
+        await context.bot.send_message(chat_id=chat_id, text="The video upscaler is temporarily disabled due to hardware limitations.")
+        # # Saves the video locally
+        # await context.bot.send_message(chat_id=chat_id, text="Uploading video")
+        # document_file = await context.bot.get_file(file.file_id)
+        # os.makedirs("./videos", exist_ok=True)
+        # file_path = "./videos/" + f"{chat_id}_{file.file_unique_id}.{file.mime_type.split('/')[1]}"
+        # try:
+        #     await document_file.download_to_drive(file_path)
+        # except Exception as e:
+        #     logging.error(e)
+        #     await context.bot.send_message(chat_id=update.effective_chat.id, text="Error processing video")
 
-        # Sends the video to the server to be processed
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Video uploaded correctly")
-        await send_file(file=file_path, scale_method=None)
+        # # Sends the video to the server to be processed
+        # await context.bot.send_message(chat_id=update.effective_chat.id, text="Video uploaded correctly")
+        # await send_file(file=file_path, scale_method=None)
     elif file.mime_type.startswith('image/'):
         
         if file.file_size > 20 * 1024 * 1024:

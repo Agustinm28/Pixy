@@ -150,7 +150,7 @@ def scale_video(filename, scale):
         framerate = cap.get(cv2.CAP_PROP_FPS)
 
         # Define the codec and the name of the new video
-        fourcc = cv2.VideoWriter_fourcc(*"avc1")  # Codec H264 (avc1), H265 (hvc1)
+        fourcc = cv2.VideoWriter_fourcc(*"hvc1")  # Codec H264 (avc1), H265 (hvc1)
         os.makedirs('./upscaled_files/', exist_ok=True)
         out = cv2.VideoWriter(f"./upscaled_files/upscaled_{filename}", fourcc, framerate, (new_widht, new_height))
 
