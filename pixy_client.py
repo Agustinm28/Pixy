@@ -17,7 +17,7 @@ global chat_id
 
 scale_method = None
 
-with open('./data/TEST_BOT_CREDENTIALS.txt', 'r') as f:
+with open('./data/BOT_CREDENTIALS.txt', 'r') as f:
     token = str(f.read())
 chat_id = None
 
@@ -156,34 +156,35 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await query.edit_message_text(text=f"Upscale method: {scale_type}")
 
     # Define another inline keyboard for asking another thing
-    keyboard2 = [
-        [InlineKeyboardButton("2x", callback_data=f"2x_{file_path}")],
-        [InlineKeyboardButton("3x", callback_data=f"3x_{file_path}")],
-        [InlineKeyboardButton("4x", callback_data=f"4x_{file_path}")],
-    ]
+    # keyboard2 = [
+    #     [InlineKeyboardButton("2x", callback_data=f"2_{file_path}")],
+    #     [InlineKeyboardButton("3x", callback_data=f"3_{file_path}")],
+    #     [InlineKeyboardButton("4x", callback_data=f"4_{file_path}")],
+    # ]
 
-    reply_markup2 = InlineKeyboardMarkup(keyboard2)
+    #reply_markup2 = InlineKeyboardMarkup(keyboard2)
     # Check if the first keyboard has been answered
+    
     if scale_method is not None:
         # Send the second keyboard and wait for a response
-        await update.message.reply_text("Select a upscale factor:", reply_markup=reply_markup2)
+        # await update.callback_query.message.reply_text("Select a upscale factor:", reply_markup=reply_markup2)
 
-        # Get the response from the second keyboard
-        query2 = update.callback_query
-        await query2.answer()
-        factor = query2.data
+        # # Get the response from the second keyboard
+        # query2 = update.callback_query
+        # await query2.answer()
+        # factor = query2.data
 
-        factor_data = factor.split('_', 1)
-        factor_value = int(factor_data[0])
+        # factor_data = factor.split('_', 1)
+        # factor_value = int(factor_data[0])
 
-        await query2.edit_message_text(text=f"Upscale factor: {factor_value}")
+        #await query2.edit_message_text(text=f"Upscale factor: {factor_value}x")
 
         # Check if both keyboards have been answered
-        if factor is not None:
-            # Send the image to the server to be processed
-            print(f'[{Fore.YELLOW}TEST{Fore.RESET}] Scale method: {scale_method}')
-            print(f'[{Fore.YELLOW}TEST{Fore.RESET}] Scale factor: {factor_value}')
-            await send_file(file=file_path, scale_method=scale_method)
+        #if factor_value is not None:
+        # Send the image to the server to be processed
+        # print(f'[{Fore.YELLOW}TEST{Fore.RESET}] Scale method: {scale_method}')
+        # print(f'[{Fore.YELLOW}TEST{Fore.RESET}] Scale factor: {factor_value}')
+        await send_file(file=file_path, scale_method=scale_method)
 
 
 async def receive_file(update: Update, context: ContextTypes.DEFAULT_TYPE):  
