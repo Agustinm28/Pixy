@@ -1,4 +1,5 @@
 data/BOT_CREDENTIALS.txt
+data/TEST_BOT_CREDENTIALS.txt
 data/REPLICATE_KEY.txt
 env
 ./env.sh
