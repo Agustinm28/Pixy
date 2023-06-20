@@ -142,7 +142,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     # Handler in charge of waiting for a response for Keyboard inline
     query = update.callback_query
-    await query.answer()
+    query.answer()
     scale = query.data
 
     # Gets the file path and scaling method from callback_data
@@ -155,37 +155,101 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         scale_type = "AI"
     await query.edit_message_text(text=f"Upscale method: {scale_type}")
 
-    # Define another inline keyboard for asking another thing
-    # keyboard2 = [
-    #     [InlineKeyboardButton("2x", callback_data=f"2_{file_path}")],
-    #     [InlineKeyboardButton("3x", callback_data=f"3_{file_path}")],
-    #     [InlineKeyboardButton("4x", callback_data=f"4_{file_path}")],
-    # ]
-
-    #reply_markup2 = InlineKeyboardMarkup(keyboard2)
-    # Check if the first keyboard has been answered
+    # Save the scale method and file path in context.user_data
+    context.user_data["scale_method"] = scale_method
+    context.user_data["file_path"] = file_path
     
-    if scale_method is not None:
-        # Send the second keyboard and wait for a response
-        # await update.callback_query.message.reply_text("Select a upscale factor:", reply_markup=reply_markup2)
+    # Keyboard inline to select scale factor
+    keyboard = [
+        [InlineKeyboardButton("x2", callback_data=f"0_{file_path}")],
+        [InlineKeyboardButton("x3", callback_data=f"1_{file_path}")],
+        [InlineKeyboardButton("x4", callback_data=f"2_{file_path}")],
+    ]
 
-        # # Get the response from the second keyboard
-        # query2 = update.callback_query
-        # await query2.answer()
-        # factor = query2.data
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
-        # factor_data = factor.split('_', 1)
-        # factor_value = int(factor_data[0])
+    await query.message.reply_text("Select a scale factor:", reply_markup=reply_markup)
 
-        #await query2.edit_message_text(text=f"Upscale factor: {factor_value}x")
+    #if scale_method is not None:
+        #await send_file(file=file_path, scale_method=scale_method)
 
-        # Check if both keyboards have been answered
-        #if factor_value is not None:
-        # Send the image to the server to be processed
-        # print(f'[{Fore.YELLOW}TEST{Fore.RESET}] Scale method: {scale_method}')
-        # print(f'[{Fore.YELLOW}TEST{Fore.RESET}] Scale factor: {factor_value}')
-        await send_file(file=file_path, scale_method=scale_method)
+async def button2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handles the button callback from another inline keyboard. Extracts the scale factor and file path from the callback data. Sends a response to the callback query, indicating the selected scale factor. Then, creates another inline keyboard with the options of face enhance.
 
+    Parameters:
+
+    - update (Update): The update object containing information about the callback query.
+    - context (ContextTypes.DEFAULT_TYPE): The context object for handling the bot's functionality.
+
+    Returns:
+    - None
+    """
+    # Handler in charge of waiting for a response for Keyboard inline
+    query = update.callback_query
+    query.answer()
+    factor = query.data
+
+    # Gets the file path and scaling factor from callback_data
+    factor_data = factor.split('_', 1)
+    scale_factor = int(factor_data[0])
+    file_path = factor_data[1]
+    if scale_factor == 0:
+        scale_type_f = "x2"
+    elif scale_factor == 1:
+        scale_type_f = "x3"
+    elif scale_factor == 2:
+        scale_type_f = "x4"
+    await query.edit_message_text(text=f"Upscale method: {scale_type_f}")
+
+    # Save the scale factor in context.user_data
+    context.user_data["scale_factor"] = scale_factor
+
+    # Keyboard inline to select face enhance
+    keyboard = [
+        [InlineKeyboardButton("Yes", callback_data=f"1_{file_path}")],
+        [InlineKeyboardButton("No", callback_data=f"0_{file_path}")],
+    ]
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await query.message.reply_text("Apply face enhance?", reply_markup=reply_markup)
+
+async def button3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handles the button callback from another inline keyboard. Extracts the face enhance option and file path from the callback data. Sends a response to the callback query, indicating the selected face enhance option. Then, sends the file to a server for processing using the specified scale method, scale factor and face enhance option.
+
+    Parameters:
+
+    - update (Update): The update object containing information about the callback query.
+    - context (ContextTypes.DEFAULT_TYPE): The context object for handling the bot's functionality.
+
+    Returns:
+    - None
+    """
+    # Handler in charge of waiting for a response for Keyboard inline
+    query = update.callback_query
+    query.answer()
+    enhance = query.data
+
+    # Gets the file path and face enhance option from callback_data
+    enhance_data = enhance.split('_', 1)
+    face_enhance = int(enhance_data[0])
+    file_path = enhance_data[1]
+    if face_enhance == 0:
+        enhance_type = "No"
+    else:
+        enhance_type = "Yes"
+    await query.edit_message_text(text=f"Face enhance: {enhance_type}")
+
+    # Save the face enhance option in context.user_data
+    context.user_data["face_enhance"] = face_enhance
+
+    # Get the scale method and scale factor from context.user_data
+    scale_method = context.user_data["scale_method"]
+    scale_factor = context.user_data["scale_factor"]
+
+    await send_file(file=file_path, scale_method=scale_method, scale_factor= scale_factor, face_enhance = face_enhance)
 
 async def receive_file(update: Update, context: ContextTypes.DEFAULT_TYPE):  
     """
@@ -253,7 +317,7 @@ async def receive_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=update.effective_chat.id, text="File type not recognized")
         return
 
-async def send_file(file, scale_method):
+async def send_file(file, scale_method, scale_factor, face_enhance):
     """
     Sends a file to a server for processing.
 
@@ -322,14 +386,17 @@ if __name__ == '__main__':
     help_handler = CommandHandler('help', help)
     scale_handler = CommandHandler('scale', scale)
     button_handler = CallbackQueryHandler(button)
+    button2_handler = CallbackQueryHandler(button2)
+    button3_handler = CallbackQueryHandler(button3)
 
     application.add_handler(start_handler)
     application.add_handler(help_handler)
-    application.add_handler(button_handler)
     application.add_handler(scale_handler)
+    application.add_handler(button_handler)
+    application.add_handler(button2_handler)
+    application.add_handler(button3_handler)
     application.add_handler(MessageHandler(filters.VIDEO, receive_video))
     application.add_handler(MessageHandler(filters.PHOTO, receive_image))
     application.add_handler(MessageHandler(filters.ATTACHMENT, receive_file))
-    
     
     application.run_polling()
