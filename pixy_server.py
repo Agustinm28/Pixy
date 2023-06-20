@@ -68,6 +68,8 @@ class TCPRequestHandler(socketserver.BaseRequestHandler):
             filename = file_obj['filename']
             file_data = file_obj['data']
             scale_method = file_obj['scale']
+            scale_factor = file_obj['factor']
+            face_enhance = file_obj['face']
             print(f'[{Fore.GREEN}SAVING{Fore.RESET}] Saving file locally')
             os.makedirs('./rec_files/', exist_ok=True)
             with open('./rec_files/' + filename, 'wb') as f:
@@ -76,7 +78,7 @@ class TCPRequestHandler(socketserver.BaseRequestHandler):
             self.request.close()
 
             print(f'[{Fore.GREEN}PROCESSING{Fore.RESET}] Sending to queue')
-            queue.put_nowait((filename, scale_method))
+            queue.put_nowait((filename, scale_method, scale_factor, face_enhance))
         except (ConnectionResetError, ConnectionAbortedError) as e:
             print(f"[{Fore.RED}ERROR{Fore.RESET}] Error connecting to the client {client}: {e}")
 
@@ -93,7 +95,7 @@ def process_queue():
     """
     try:
         while True:
-            filename, scale_method = queue.get()
+            filename, scale_method, scale_factor, face_enhance = queue.get()
             mimetypes.add_type("image/webp", ".webp", strict=True)
             filetype, encoding = mimetypes.guess_type(filename)
             chat_id = int((filename.split("_"))[0])
@@ -111,14 +113,14 @@ def process_queue():
                     if scale_method == 0:
                         # Image Processing with Pixel Interpolation
                         p_image = multiprocessing.Process(
-                            target=scale_image, args=(filename, 2))
+                            target=scale_image, args=(filename, scale_factor))
                         print(f'[{Fore.BLUE}PROCESSING{Fore.RESET}] Generating son process for {filename}')
                         p_image.start()
                         p_image.join()
                     elif scale_method == 1:
                         # Image Processing with AI
                         p_image = multiprocessing.Process(
-                            target=scale_image_ia, args=(filename,))
+                            target=scale_image_ia, args=(filename, scale_factor, face_enhance))
                         print(f'[{Fore.BLUE}PROCESSING{Fore.RESET}] Generating son process for {filename}')
                         p_image.start()
                         p_image.join()

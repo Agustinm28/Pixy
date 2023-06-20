@@ -23,7 +23,7 @@ with open('./data/REPLICATE_KEY.txt', 'r') as f:
 os.environ["REPLICATE_API_TOKEN"] = token
 
 
-def scale_image(filename, scale):
+def scale_image(filename, factor):
 
     image_path = f'./rec_files/{filename}'
     chat_id = int((filename.split("_"))[0])
@@ -34,8 +34,8 @@ def scale_image(filename, scale):
         # Read the input resolution of the image
         height, width = image.shape[:2]
         # Duplicate image resolution
-        new_height = height * scale
-        new_widht = width * scale
+        new_height = height * factor
+        new_widht = width * factor
 
         # Scale the image with the cv2.INTER_LANCZOS method.
         print(f"[{Fore.GREEN}SCALING{Fore.RESET}] {filename} scaling with lanczos")
@@ -69,7 +69,7 @@ def scale_image(filename, scale):
 
         # Log information
         print(f'{Fore.YELLOW}Input resolution:{Fore.RESET} {height}x{width}')
-        print(f'{Fore.YELLOW}Scale factor:{Fore.RESET} x{scale}')
+        print(f'{Fore.YELLOW}Scale factor:{Fore.RESET} x{factor}')
         print(f'{Fore.YELLOW}Output resolution:{Fore.RESET} {new_height}x{new_widht}')
         send_message(chat_id, f"Scaling finished, output resolution: {new_widht}x{new_height}")
 
@@ -92,7 +92,7 @@ def scale_image(filename, scale):
         cv2.destroyAllWindows()
 
 
-def scale_image_ia(filename):
+def scale_image_ia(filename, factor, face):
     try:
         # Load input image
         image_path = f'./rec_files/{filename}'
@@ -102,12 +102,17 @@ def scale_image_ia(filename):
         input_file = io.BytesIO()
         input_image.save(input_file, format="JPEG")
 
+        if face == 5:
+            face_value = True
+        else:
+            face_value = False
+
         # Send the image to replicate through its API to be scaled
         print(f'[{Fore.GREEN}SCALING{Fore.RESET}] {filename} scaling with AI')
         send_message(chat_id, "Scaling Image (AI)...")
         output_image = replicate.run(
             "nightmareai/real-esrgan:42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
-            input={"image": input_file, "face_enhance":False, "scale":4}
+            input={"image": input_file, "face_enhance":face_value, "scale":factor}
         )
         print(f'[{Fore.GREEN}SCALING{Fore.RESET}] Scaling with AI finished')
 
@@ -116,11 +121,12 @@ def scale_image_ia(filename):
         response = requests.get(output_image)
         output_image = PIL.Image.open(io.BytesIO(response.content))
         width, height = output_image.size
+        # Save the output image
+        os.makedirs('./upscaled_files/', exist_ok=True)
+        output_image.save(f"./upscaled_files/upscaled_{filename}")
         print(f'[{Fore.GREEN}SCALING{Fore.RESET}] Image saved correctly')
         send_message(chat_id, f"Scaling finished, output resolution: {width}x{height}")
 
-        # Save the output image
-        output_image.save(f"./upscaled_files/upscaled_{filename}")
     except replicate.exceptions.ModelError as e:
         print(f"[{Fore.RED}ERROR{Fore.RESET}] {e}")
         send_message(chat_id, "An error occurred while scaling the image with AI. Send the image as a Photo, not File.")
